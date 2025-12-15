@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Webamp Player</title>
+    <style>
+        /* Ensures the player fits the iframe window */
+        body, html { margin: 0; padding: 0; width: 100%; height: 100%; overflow: hidden; background: transparent; }
+        #app { width: 100%; height: 100%; }
+    </style>
+</head>
+<body>
+    <div id="app"></div>
+
+    <!-- Load Webamp and Butterchurn from unpkg -->
+    <script src="https://unpkg.com/webamp@1.5.0/built/webamp.bundle.min.js"></script>
+    <script src="https://unpkg.com/butterchurn@2.6.7/lib/butterchurn.min.js"></script>
+    <script src="https://unpkg.com/butterchurn-presets@2.4.7/lib/butterchurnPresets.min.js"></script>
+
+    <script>
+        const Webamp = window.Webamp;
+
+        // 1. Define your custom tracks here
+        const initialTracks = [
+            {
+                metaData: { artist: "Choker", title: "El Dorado" },
+                // PASTE YOUR JSDELIVR MP3 LINK BELOW
+                url: "https://cdn.jsdelivr.net/gh/coolgamer4556/webamp-assets/@main/1_05%20-%20El%20Dorado.mp3",
+                duration: 0 // Optional, but helps if known
+            },
+            {
+                metaData: { artist: "Artist Two", title: "Song Two" },
+                url: "https://cdn.jsdelivr.net/gh/USER/REPO@main/song2.mp3"
+            }
+        ];
+
+        // 2. Define your custom skin (Optional)
+        // PASTE YOUR JSDELIVR SKIN (.wsz) LINK BELOW
+        const initialSkin = {
+            url: "https://cdn.jsdelivr.net/coolgamer4556/webamp-assets/@main/Winamp5_Classified_v5.5.wsz"
+        };
+
+        // 3. Initialize Webamp with Butterchurn
+        const webamp = new Webamp({
+            initialTracks: initialTracks,
+            initialSkin: initialSkin,
+            // This enables Butterchurn
+            __butterchurnOptions: {
+                importButterchurn: () => Promise.resolve(window.butterchurn),
+                getPresets: () => {
+                    const presets = window.butterchurnPresets.getPresets();
+                    return Object.keys(presets).map((name) => {
+                        return { name, butterchurnPresetObject: presets[name] };
+                    });
+                },
+                butterchurnOpen: true // Auto-open visualizer
+            },
+            zIndex: 99999
+        });
+
+        // Check if Webamp is supported and render
+        if (!Webamp.browserIsSupported()) {
+            document.getElementById("app").innerText = "Webamp is not supported in this browser";
+        } else {
+            webamp.renderWhenReady(document.getElementById("app"));
+        }
+    </script>
+</body>
+</html>
