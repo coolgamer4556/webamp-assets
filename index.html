@@ -5,7 +5,7 @@
     <title>Webamp Player</title>
     <style>
         /* Ensures the player fits the iframe window */
-        body, html { margin: 0; padding: 0; width: 100%; height: 100%; overflow: hidden; background: transparent; }
+        body, html { margin: 0; padding: 0; width: 100%; height: 100%; overflow: hidden; background: #222; }
         #app { width: 100%; height: 100%; }
     </style>
 </head>
@@ -24,20 +24,21 @@
         const initialTracks = [
             {
                 metaData: { artist: "Choker", title: "El Dorado" },
-                // PASTE YOUR JSDELIVR MP3 LINK BELOW
+                // This link was fine, kept it as is
                 url: "https://cdn.jsdelivr.net/gh/coolgamer4556/webamp-assets/@main/1_05%20-%20El%20Dorado.mp3",
-                duration: 0 // Optional, but helps if known
+                duration: 0 
             },
             {
-                metaData: { artist: "Artist Two", title: "Song Two" },
-                url: "https://github.com/coolgamer4556/webamp-assets/blob/main/Jonn%20Hart%20%E2%80%93%20Who%20Booty.mp3"
+                metaData: { artist: "Jonn Hart", title: "Who Booty" },
+                // FIXED: Changed from github.com/blob to cdn.jsdelivr.net/gh
+                url: "https://cdn.jsdelivr.net/gh/coolgamer4556/webamp-assets@main/Jonn%20Hart%20%E2%80%93%20Who%20Booty.mp3"
             }
         ];
 
-        // 2. Define your custom skin (Optional)
-        // PASTE YOUR JSDELIVR SKIN (.wsz) LINK BELOW
+        // 2. Define your custom skin
         const initialSkin = {
-            url: "https://cdn.jsdelivr.net/coolgamer4556/webamp-assets/@main/Winamp5_Classified_v5.5.wsz"
+            // FIXED: Added missing '/gh/' to the URL
+            url: "https://cdn.jsdelivr.net/gh/coolgamer4556/webamp-assets/@main/Winamp5_Classified_v5.5.wsz"
         };
 
         // 3. Initialize Webamp with Butterchurn
@@ -53,7 +54,7 @@
                         return { name, butterchurnPresetObject: presets[name] };
                     });
                 },
-                butterchurnOpen: true // Auto-open visualizer
+                butterchurnOpen: true 
             },
             zIndex: 99999
         });
@@ -66,5 +67,4 @@
         }
     </script>
 </body>
-
 </html>
