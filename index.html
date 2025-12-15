@@ -10,6 +10,7 @@
 </head>
 <body>
     <div id="app"></div>
+
     <script src="https://unpkg.com/webamp@1.5.0/built/webamp.bundle.min.js"></script>
     <script src="https://unpkg.com/butterchurn@2.6.7/lib/butterchurn.min.js"></script>
     <script src="https://unpkg.com/butterchurn-presets@2.4.7/lib/butterchurnPresets.min.js"></script>
@@ -21,17 +22,24 @@
             {
                 metaData: { artist: "Choker", title: "El Dorado" },
                 url: "https://cdn.jsdelivr.net/gh/coolgamer4556/webamp-assets@main/1_05%20-%20El%20Dorado.mp3"
+            },
+            {
+                // UNCOMMENTED AND FIXED
+                metaData: { artist: "Jonn Hart", title: "Who Booty" },
+                // Note: I kept the %E2%80%93 here, but if this song fails to play, 
+                // you must rename the file on GitHub to standard dashes (-)
+                url: "https://cdn.jsdelivr.net/gh/coolgamer4556/webamp-assets@main/Jonn%20Hart%20%E2%80%93%20Who%20Booty.mp3"
             }
-            // I commented this out. If the player loads now, this link was the problem.
-            // ,{
-            //    metaData: { artist: "Jonn Hart", title: "Who Booty" },
-            //    url: "https://cdn.jsdelivr.net/gh/coolgamer4556/webamp-assets@main/Jonn%20Hart%20-%20Who%20Booty.mp3"
-            // }
         ];
+
+        const initialSkin = {
+            // UNCOMMENTED AND FIXED
+            url: "https://cdn.jsdelivr.net/gh/coolgamer4556/webamp-assets@main/Winamp5_Classified_v5.5.wsz"
+        };
 
         const webamp = new Webamp({
             initialTracks: initialTracks,
-            // initialSkin: initialSkin,  <-- COMMENTED OUT. If player loads now, the Skin URL was broken.
+            initialSkin: initialSkin, // Skin is enabled again here
             __butterchurnOptions: {
                 importButterchurn: () => Promise.resolve(window.butterchurn),
                 getPresets: () => {
