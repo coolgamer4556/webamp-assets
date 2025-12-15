@@ -4,15 +4,12 @@
     <meta charset="UTF-8">
     <title>Webamp Player</title>
     <style>
-        /* Ensures the player fits the iframe window */
         body, html { margin: 0; padding: 0; width: 100%; height: 100%; overflow: hidden; background: #222; }
         #app { width: 100%; height: 100%; }
     </style>
 </head>
 <body>
     <div id="app"></div>
-
-    <!-- Load Webamp and Butterchurn from unpkg -->
     <script src="https://unpkg.com/webamp@1.5.0/built/webamp.bundle.min.js"></script>
     <script src="https://unpkg.com/butterchurn@2.6.7/lib/butterchurn.min.js"></script>
     <script src="https://unpkg.com/butterchurn-presets@2.4.7/lib/butterchurnPresets.min.js"></script>
@@ -20,32 +17,21 @@
     <script>
         const Webamp = window.Webamp;
 
-        // 1. Define your custom tracks here
         const initialTracks = [
             {
                 metaData: { artist: "Choker", title: "El Dorado" },
-                // This link was fine, kept it as is
-                url: "https://cdn.jsdelivr.net/gh/coolgamer4556/webamp-assets@main/1_05%20-%20El%20Dorado.mp3",
-                duration: 0 
-            },
-            {
-                metaData: { artist: "Jonn Hart", title: "Who Booty" },
-                // FIXED: Changed from github.com/blob to cdn.jsdelivr.net/gh
-                url: "https://cdn.jsdelivr.net/gh/coolgamer4556/webamp-assets@main/Jonn%20Hart%20%E2%80%93%20Who%20Booty.mp3"
+                url: "https://cdn.jsdelivr.net/gh/coolgamer4556/webamp-assets@main/1_05%20-%20El%20Dorado.mp3"
             }
+            // I commented this out. If the player loads now, this link was the problem.
+            // ,{
+            //    metaData: { artist: "Jonn Hart", title: "Who Booty" },
+            //    url: "https://cdn.jsdelivr.net/gh/coolgamer4556/webamp-assets@main/Jonn%20Hart%20-%20Who%20Booty.mp3"
+            // }
         ];
 
-        // 2. Define your custom skin
-        const initialSkin = {
-            // FIXED: Added missing '/gh/' to the URL
-            url: "https://cdn.jsdelivr.net/gh/coolgamer4556/webamp-assets@main/Winamp5_Classified_v5.5.wsz"
-        };
-
-        // 3. Initialize Webamp with Butterchurn
         const webamp = new Webamp({
             initialTracks: initialTracks,
-            initialSkin: initialSkin,
-            // This enables Butterchurn
+            // initialSkin: initialSkin,  <-- COMMENTED OUT. If player loads now, the Skin URL was broken.
             __butterchurnOptions: {
                 importButterchurn: () => Promise.resolve(window.butterchurn),
                 getPresets: () => {
@@ -59,7 +45,6 @@
             zIndex: 99999
         });
 
-        // Check if Webamp is supported and render
         if (!Webamp.browserIsSupported()) {
             document.getElementById("app").innerText = "Webamp is not supported in this browser";
         } else {
@@ -68,5 +53,3 @@
     </script>
 </body>
 </html>
-
-
