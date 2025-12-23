@@ -2,19 +2,29 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Webamp Player - Large</title>
+    <title>Webamp - Big Mode</title>
     <style>
-        /* Keep it simple so it doesn't conflict with Hotglue's container */
         body, html { 
             margin: 0; 
             padding: 0; 
             width: 100%; 
             height: 100%; 
             background: #001f3f; 
+            overflow: hidden;
+            display: flex;
+            align-items: center;
+            justify-content: center;
         }
+
+        /* This is the secret sauce. This scales the WHOLE player. */
         #app { 
-            width: 100%; 
-            height: 100%; 
+            transform: scale(1.5); /* Change to 2.0 for even bigger */
+            transform-origin: center;
+        }
+
+        /* Ensure the player doesn't get cut off if it's too big for the Hotglue box */
+        #webamp {
+            position: relative !important;
         }
     </style>
 </head>
@@ -62,32 +72,35 @@
         if (!Webamp.browserIsSupported()) {
             document.getElementById("app").innerText = "Webamp is not supported in this browser";
         } else {
-            // SAFE LOADING METHOD:
-            // We use .then() to wait until the player is 100% visible on screen 
-            // before we try to change its size settings.
             webamp.renderWhenReady(document.getElementById("app")).then(() => {
                 
-                // 1. Enable Double Size Mode
-                webamp.store.dispatch({ 
-                    type: 'SET_DOUBLE_SIZE_MODE', 
-                    doubleSizeMode: true 
-                });
+                // We use a 500ms timeout to wait for the skin to "settle" 
+                // before we force the window to grow.
+                setTimeout(() => {
+                    
+                    // 1. Force Double Size Mode (Pixel Doubling)
+                    webamp.store.dispatch({ 
+                        type: 'SET_DOUBLE_SIZE_MODE', 
+                        doubleSizeMode: true 
+                    });
 
-                // 2. Make the Milkdrop (visualizer) window 2 blocks wide and 2 blocks tall
-                webamp.store.dispatch({
-                    type: 'UPDATE_WINDOW_PROPS',
-                    windowId: 'milkdrop',
-                    props: { size: [2, 2] } 
-                });
+                    // 2. STRETCH the visualizer window grid. 
+                    // [3, 2] means 3 units wide, 2 units tall.
+                    webamp.store.dispatch({
+                        type: 'UPDATE_WINDOW_PROPS',
+                        windowId: 'milkdrop',
+                        props: { size: [3, 2] } 
+                    });
 
-                // 3. Bring the visualizer to the front
-                webamp.store.dispatch({ 
-                    type: 'SET_FOCUS', 
-                    windowId: 'milkdrop' 
-                });
+                    // 3. Center the visualizer on screen
+                    webamp.store.dispatch({ 
+                        type: 'UPDATE_WINDOW_PROPS', 
+                        windowId: 'milkdrop',
+                        props: { xy: [0, 116] } // Positions it below the main player
+                    });
+
+                }, 500);
                 
-            }).catch(err => {
-                console.error("Webamp failed to load:", err);
             });
         }
     </script>
