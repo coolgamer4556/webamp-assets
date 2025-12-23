@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Webamp - Big Mode</title>
+    <title>Webamp - Full Size</title>
     <style>
         body, html { 
             margin: 0; 
@@ -11,20 +11,22 @@
             height: 100%; 
             background: #001f3f; 
             overflow: hidden;
-            display: flex;
-            align-items: center;
-            justify-content: center;
         }
 
-        /* This is the secret sauce. This scales the WHOLE player. */
         #app { 
-            transform: scale(1.5); /* Change to 2.0 for even bigger */
-            transform-origin: center;
+            position: absolute;
+            top: 0;
+            left: 0;
+            /* Scale from the top-left corner to remove the 'invisible border' */
+            transform: scale(1.2); 
+            transform-origin: top left; 
         }
 
-        /* Ensure the player doesn't get cut off if it's too big for the Hotglue box */
+        /* This ensures Webamp doesn't try to constrain itself */
         #webamp {
-            position: relative !important;
+            position: absolute !important;
+            top: 0 !important;
+            left: 0 !important;
         }
     </style>
 </head>
@@ -74,32 +76,43 @@
         } else {
             webamp.renderWhenReady(document.getElementById("app")).then(() => {
                 
-                // We use a 500ms timeout to wait for the skin to "settle" 
-                // before we force the window to grow.
+                // Wait for skin to load before forcing big sizes
                 setTimeout(() => {
                     
-                    // 1. Force Double Size Mode (Pixel Doubling)
+                    // 1. Enable Double Size Mode (Pixel Doubling)
                     webamp.store.dispatch({ 
                         type: 'SET_DOUBLE_SIZE_MODE', 
                         doubleSizeMode: true 
                     });
 
-                    // 2. STRETCH the visualizer window grid. 
-                    // [3, 2] means 3 units wide, 2 units tall.
+                    // 2. MAKE MILKDROP HUGE
+                    // On Webamp.org, this window is stretched across the grid.
+                    // [Width, Height] - standard is [1,1]. Let's go big:
                     webamp.store.dispatch({
                         type: 'UPDATE_WINDOW_PROPS',
                         windowId: 'milkdrop',
-                        props: { size: [3, 2] } 
+                        props: { 
+                            size: [4, 3], // Stretches the box 4 units wide, 3 high
+                            hidden: false 
+                        } 
                     });
 
-                    // 3. Center the visualizer on screen
-                    webamp.store.dispatch({ 
-                        type: 'UPDATE_WINDOW_PROPS', 
+                    // 3. POSITION THE WINDOWS
+                    // Main Player at top left
+                    webamp.store.dispatch({
+                        type: 'UPDATE_WINDOW_PROPS',
+                        windowId: 'main',
+                        props: { xy: [0, 0] }
+                    });
+
+                    // Milkdrop right below it
+                    webamp.store.dispatch({
+                        type: 'UPDATE_WINDOW_PROPS',
                         windowId: 'milkdrop',
-                        props: { xy: [0, 116] } // Positions it below the main player
+                        props: { xy: [0, 116] } 
                     });
 
-                }, 500);
+                }, 400);
                 
             });
         }
