@@ -18,6 +18,16 @@
 
     <script>
         const Webamp = window.Webamp;
+        webamp.onReady(() => {
+    // 1. Enable Double Size Mode for the whole player
+        webamp.store.dispatch({ type: 'SET_DOUBLE_SIZE_MODE', doubleSizeMode: true });
+
+    // 2. Optional: If you want to force the visualizer to be the "Main" window focus
+    // webamp.store.dispatch({ type: 'SET_FOCUS', windowId: 'milkdrop' });
+        });
+
+        if (!Webamp.browserIsSupported()) {
+        // ... rest of your code ...
 
         const initialTracks = [
             {
@@ -62,3 +72,4 @@
     </script>
 </body>
 </html>
+
