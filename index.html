@@ -2,39 +2,25 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Webamp Player - Large Edition</title>
+    <title>Webamp Player - Large</title>
     <style>
-        /* CSS to center the player and give it a nice background */
+        /* Keep it simple so it doesn't conflict with Hotglue's container */
         body, html { 
             margin: 0; 
             padding: 0; 
             width: 100%; 
             height: 100%; 
-            overflow: hidden; 
             background: #001f3f; 
-            display: flex;
-            align-items: center;
-            justify-content: center;
         }
         #app { 
             width: 100%; 
             height: 100%; 
         }
-
-        /* OPTIONAL: If the player is STILL too small on a 4K monitor, 
-           uncomment the lines below to force-scale the entire UI */
-        /*
-        #webamp {
-            transform: scale(1.2);
-            transform-origin: center;
-        }
-        */
     </style>
 </head>
 <body>
     <div id="app"></div>
 
-    <!-- Dependencies -->
     <script src="https://unpkg.com/webamp@1.5.0/built/webamp.bundle.min.js"></script>
     <script src="https://unpkg.com/butterchurn@2.6.7/lib/butterchurn.min.js"></script>
     <script src="https://unpkg.com/butterchurn-presets@2.4.7/lib/butterchurnPresets.min.js"></script>
@@ -73,35 +59,36 @@
             zIndex: 99999
         });
 
-        // THIS IS THE SECTION THAT MAKES IT BIGGER
-        webamp.onReady(() => {
-            // 1. Toggle Double Size Mode (Equivalent to Ctrl+D)
-            // This makes the standard buttons and text twice as large.
-            webamp.store.dispatch({ 
-                type: 'SET_DOUBLE_SIZE_MODE', 
-                doubleSizeMode: true 
-            });
-
-            // 2. Resize the Visualizer (Milkdrop/Butterchurn) window specifically.
-            // In Webamp, window sizes are based on a grid. 
-            // [2, 2] is standard double size. [3, 2] or [4, 3] makes it huge.
-            webamp.store.dispatch({
-                type: 'UPDATE_WINDOW_PROPS',
-                windowId: 'milkdrop',
-                props: { size: [2, 2] } 
-            });
-            
-            // 3. Optional: Focus the visualizer window so it's on top
-            webamp.store.dispatch({ 
-                type: 'SET_FOCUS', 
-                windowId: 'milkdrop' 
-            });
-        });
-
         if (!Webamp.browserIsSupported()) {
             document.getElementById("app").innerText = "Webamp is not supported in this browser";
         } else {
-            webamp.renderWhenReady(document.getElementById("app"));
+            // SAFE LOADING METHOD:
+            // We use .then() to wait until the player is 100% visible on screen 
+            // before we try to change its size settings.
+            webamp.renderWhenReady(document.getElementById("app")).then(() => {
+                
+                // 1. Enable Double Size Mode
+                webamp.store.dispatch({ 
+                    type: 'SET_DOUBLE_SIZE_MODE', 
+                    doubleSizeMode: true 
+                });
+
+                // 2. Make the Milkdrop (visualizer) window 2 blocks wide and 2 blocks tall
+                webamp.store.dispatch({
+                    type: 'UPDATE_WINDOW_PROPS',
+                    windowId: 'milkdrop',
+                    props: { size: [2, 2] } 
+                });
+
+                // 3. Bring the visualizer to the front
+                webamp.store.dispatch({ 
+                    type: 'SET_FOCUS', 
+                    windowId: 'milkdrop' 
+                });
+                
+            }).catch(err => {
+                console.error("Webamp failed to load:", err);
+            });
         }
     </script>
 </body>
