@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Webamp - Stable Large</title>
+    <title>Webamp - Large Fixed</title>
     <style>
         body, html { 
             margin: 0; 
@@ -12,7 +12,6 @@
             background: #001f3f; 
             overflow: hidden; 
         }
-        /* No scaling here to keep performance fast */
         #app { width: 100%; height: 100%; }
     </style>
 </head>
@@ -37,7 +36,6 @@
             }
         ];
 
-        // If the skin keeps failing, you can comment out the url line below to test
         const initialSkin = {
             url: "https://cdn.jsdelivr.net/gh/coolgamer4556/webamp-assets@main/Winamp5_Classified_v5.5.wsz"
         };
@@ -58,42 +56,44 @@
             zIndex: 99999
         });
 
-        // This function handles all the "Size" logic once the player is ready
-        webamp.onReady(() => {
-            console.log("Webamp is ready, applying sizes...");
-
-            // 1. Double the pixel size (Standard Winamp Double Mode)
-            webamp.store.dispatch({ type: 'SET_DOUBLE_SIZE_MODE', doubleSizeMode: true });
-
-            // 2. Make the Visualizer window very large
-            // [Width, Height] - On the official site, it's roughly 3 or 4 blocks wide
-            webamp.store.dispatch({
-                type: 'UPDATE_WINDOW_PROPS',
-                windowId: 'milkdrop',
-                props: { size: [3, 2] } 
-            });
-
-            // 3. Move the windows so they don't overlap
-            // Main Player at 0,0
-            webamp.store.dispatch({
-                type: 'UPDATE_WINDOW_PROPS',
-                windowId: 'main',
-                props: { xy: [0, 0] }
-            });
-
-            // Milkdrop right below it (116 is the height of the main player in double mode)
-            webamp.store.dispatch({
-                type: 'UPDATE_WINDOW_PROPS',
-                windowId: 'milkdrop',
-                props: { xy: [0, 116] }
-            });
-        });
-
-        // Render the player
         if (!Webamp.browserIsSupported()) {
             document.getElementById("app").innerText = "Webamp is not supported";
         } else {
-            webamp.renderWhenReady(document.getElementById("app"));
+            // Correct way to run code after the player loads:
+            webamp.renderWhenReady(document.getElementById("app")).then(() => {
+                
+                // 1. Enable Double Size Mode
+                webamp.store.dispatch({ 
+                    type: 'SET_DOUBLE_SIZE_MODE', 
+                    doubleSizeMode: true 
+                });
+
+                // 2. Make the Milkdrop visualizer box HUGE
+                // On webamp.org, this is often set to a large grid size.
+                // [Width, Height] -> [4, 3] is very large. 
+                // You can even try [6, 4] if you want it to fill the screen.
+                webamp.store.dispatch({
+                    type: 'UPDATE_WINDOW_PROPS',
+                    windowId: 'milkdrop',
+                    props: { size: [4, 3] } 
+                });
+
+                // 3. Move windows so they are tucked into the top-left corner
+                // This removes that "invisible border" feeling.
+                webamp.store.dispatch({
+                    type: 'UPDATE_WINDOW_PROPS',
+                    windowId: 'main',
+                    props: { xy: [0, 0] }
+                });
+
+                webamp.store.dispatch({
+                    type: 'UPDATE_WINDOW_PROPS',
+                    windowId: 'milkdrop',
+                    props: { xy: [0, 116] } // 116 is the exact height of the main player
+                });
+
+                console.log("Webamp layout updated successfully.");
+            });
         }
     </script>
 </body>
