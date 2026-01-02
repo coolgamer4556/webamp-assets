@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Webamp - Music & Skin Cycler</title>
+    <title>Webamp - Native Skin Menu & Dynamic Music</title>
     <style>
         body, html { 
             margin: 0; padding: 0; width: 100%; height: 100%; 
@@ -10,30 +10,10 @@
             font-family: sans-serif;
         }
         #app { width: 100%; height: 100%; }
-
-        /* Style for the Skin Switcher Button */
-        #skin-button {
-            position: absolute;
-            bottom: 20px;
-            right: 20px;
-            z-index: 100000; /* Must be higher than Webamp's z-index */
-            padding: 10px 20px;
-            background: rgba(0, 0, 0, 0.7);
-            color: white;
-            border: 1px solid #555;
-            cursor: pointer;
-            border-radius: 4px;
-            font-size: 12px;
-            transition: background 0.2s;
-        }
-        #skin-button:hover {
-            background: rgba(50, 50, 50, 0.9);
-        }
     </style>
 </head>
 <body>
     <div id="app"></div>
-    <button id="skin-button">Change Skin</button>
 
     <script src="https://unpkg.com/webamp@1.5.0/built/webamp.bundle.min.js"></script>
     <script src="https://unpkg.com/butterchurn@2.6.7/lib/butterchurn.min.js"></script>
@@ -50,13 +30,9 @@
         const MUSIC_BASE = "https://cdn.jsdelivr.net/gh/coolgamer4556/webamp-assets@main/music/";
         const SKINS_BASE = "https://cdn.jsdelivr.net/gh/coolgamer4556/webamp-assets@main/Winamp%20Skins/";
 
-        let skinList = [];
-        let currentSkinIndex = 0;
-        let webamp;
-
         async function initWebamp() {
-            // 1. Fetch Music & Skins from GitHub simultaneously
             try {
+                // 1. Fetch Music & Skins simultaneously
                 const [musicResponse, skinsResponse] = await Promise.all([
                     fetch(MUSIC_API),
                     fetch(SKINS_API)
@@ -65,7 +41,7 @@
                 const musicFiles = await musicResponse.json();
                 const skinFiles = await skinsResponse.json();
 
-                // 2. Process Music Tracks
+                // 2. Process Music Tracks (Only from the /music folder)
                 const folderTracks = musicFiles
                     .filter(file => file.name.match(/\.(mp3|wav|ma4|m4a)$/i))
                     .map(file => ({
@@ -73,25 +49,23 @@
                         url: MUSIC_BASE + encodeURIComponent(file.name)
                     }));
 
-                // 3. Process Skins
-                skinList = skinFiles
+                // 3. Process Skins for the Webamp Menu
+                // We map them to the format: { url: '...', name: '...' }
+                const availableSkins = skinFiles
                     .filter(file => file.name.endsWith('.wsz') || file.name.endsWith('.zip'))
-                    .map(file => SKINS_BASE + encodeURIComponent(file.name));
+                    .map(file => ({
+                        url: SKINS_BASE + encodeURIComponent(file.name),
+                        name: file.name.replace(/\.[^/.]+$/, "") // Set the name shown in the menu
+                    }));
 
-                // 4. Set Initial Tracks
-                const initialTracks = [
-                    {
-                        metaData: { artist: "Choker", title: "El Dorado" },
-                        url: "https://cdn.jsdelivr.net/gh/coolgamer4556/webamp-assets@main/1_05%20-%20El%20Dorado.mp3"
-                    },
-                    ...folderTracks
-                ];
+                // 4. Initialize Webamp
+                const webamp = new Webamp({
+                    initialTracks: folderTracks, // Cleaned up: No more hardcoded El Dorado
+                    
+                    // Native Skin Menu Setup
+                    availableSkins: availableSkins, 
+                    initialSkin: availableSkins.length > 0 ? availableSkins[0] : null,
 
-                // 5. Initialize Webamp
-                webamp = new Webamp({
-                    initialTracks: initialTracks,
-                    // Use the first skin found in your folder, or a fallback
-                    initialSkin: { url: skinList[0] || "https://cdn.jsdelivr.net/gh/coolgamer4556/webamp-assets@main/Winamp5_Classified_v5.5.wsz" },
                     __butterchurnOptions: {
                         importButterchurn: () => Promise.resolve(window.butterchurn),
                         getPresets: () => {
@@ -103,7 +77,7 @@
                     zIndex: 99999
                 });
 
-                // 6. Layout and Rendering
+                // 5. Layout and Rendering
                 if (Webamp.browserIsSupported()) {
                     webamp.renderWhenReady(document.getElementById("app")).then(() => {
                         webamp.store.dispatch({ type: 'SET_DOUBLE_SIZE_MODE', doubleSizeMode: true });
@@ -111,15 +85,6 @@
                         webamp.store.dispatch({ type: 'UPDATE_WINDOW_PROPS', windowId: 'main', props: { xy: [0, 0] } });
                     });
                 }
-
-                // 7. Set up the Skin Cycling Button
-                document.getElementById('skin-button').addEventListener('click', () => {
-                    if (skinList.length === 0) return;
-                    
-                    currentSkinIndex = (currentSkinIndex + 1) % skinList.length;
-                    webamp.setSkinFromUrl(skinList[currentSkinIndex]);
-                    console.log("Switched to skin:", skinList[currentSkinIndex]);
-                });
 
             } catch (error) {
                 console.error("Error loading assets from GitHub:", error);
