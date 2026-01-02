@@ -21,12 +21,10 @@
     <script>
         const Webamp = window.Webamp;
 
-        // Configuration
         const REPO_API = "https://api.github.com/repos/coolgamer4556/webamp-assets/contents/music";
         const CDN_BASE = "https://cdn.jsdelivr.net/gh/coolgamer4556/webamp-assets@main/music/";
 
         async function initWebamp() {
-            // 1. Start with your two main files from the root folder
             let tracks = [
                 {
                     metaData: { artist: "Choker", title: "El Dorado" },
@@ -39,17 +37,16 @@
             ];
 
             try {
-                // 2. Fetch the 23 files from your /music folder automatically
                 const response = await fetch(REPO_API);
                 const files = await response.json();
 
-                // 3. Filter for music files and format them for Webamp
                 const folderTracks = files
                     .filter(file => file.name.match(/\.(mp3|wav|ma4|m4a)$/i))
                     .map(file => ({
+                        // 1. We remove 'artist' so it doesn't show "My Music"
+                        // 2. By providing just the title, Webamp shows the filename initially
                         metaData: { 
-                            artist: "My Music", 
-                            title: file.name.replace(/\.[^/.]+$/, "") // Removes the .mp3 extension from the name
+                            title: file.name.replace(/\.[^/.]+$/, "") 
                         },
                         url: CDN_BASE + encodeURIComponent(file.name)
                     }));
@@ -59,7 +56,6 @@
                 console.error("Could not load music folder:", error);
             }
 
-            // 4. Initialize Webamp with the combined list
             const webamp = new Webamp({
                 initialTracks: tracks,
                 initialSkin: {
@@ -76,7 +72,6 @@
                 zIndex: 99999
             });
 
-            // 5. Render and Apply Layout
             if (Webamp.browserIsSupported()) {
                 webamp.renderWhenReady(document.getElementById("app")).then(() => {
                     webamp.store.dispatch({ type: 'SET_DOUBLE_SIZE_MODE', doubleSizeMode: true });
@@ -86,7 +81,6 @@
             }
         }
 
-        // Run the setup
         initWebamp();
     </script>
 </body>
