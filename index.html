@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Webamp - Large Fixed</title>
+    <title>Webamp - Auto-Loading Playlist</title>
     <style>
         body, html { 
             margin: 0; padding: 0; width: 100%; height: 100%; 
@@ -21,62 +21,73 @@
     <script>
         const Webamp = window.Webamp;
 
-        // Base URL for your music folder
-        const MUSIC_BASE = "https://cdn.jsdelivr.net/gh/coolgamer4556/webamp-assets@main/music/";
+        // Configuration
+        const REPO_API = "https://api.github.com/repos/coolgamer4556/webamp-assets/contents/music";
+        const CDN_BASE = "https://cdn.jsdelivr.net/gh/coolgamer4556/webamp-assets@main/music/";
 
-        // LIST YOUR FILENAMES HERE
-        // Replace 'filename.mp3' with the actual names of your files in GitHub
-        const myMusicFiles = [
-            "filename1.mp3",
-            "filename2.wav",
-            "filename3.ma4",
-            // ... add all 23 filenames here
-        ];
-
-        // This automatically formats the filenames into Webamp tracks
-        const initialTracks = [
-            {
-                metaData: { artist: "Choker", title: "El Dorado" },
-                url: "https://cdn.jsdelivr.net/gh/coolgamer4556/webamp-assets@main/1_05%20-%20El%20Dorado.mp3"
-            },
-            {
-                metaData: { artist: "Jonn Hart", title: "Who Booty" },
-                url: "https://cdn.jsdelivr.net/gh/coolgamer4556/webamp-assets@main/Jonn%20Hart%20%E2%80%93%20Who%20Booty.mp3"
-            },
-            ...myMusicFiles.map(filename => ({
-                metaData: { 
-                    artist: "My Music", 
-                    title: filename.replace(/\.[^/.]+$/, "") // This removes the extension (like .mp3) from the title
+        async function initWebamp() {
+            // 1. Start with your two main files from the root folder
+            let tracks = [
+                {
+                    metaData: { artist: "Choker", title: "El Dorado" },
+                    url: "https://cdn.jsdelivr.net/gh/coolgamer4556/webamp-assets@main/1_05%20-%20El%20Dorado.mp3"
                 },
-                url: MUSIC_BASE + encodeURIComponent(filename)
-            }))
-        ];
+                {
+                    metaData: { artist: "Jonn Hart", title: "Who Booty" },
+                    url: "https://cdn.jsdelivr.net/gh/coolgamer4556/webamp-assets@main/Jonn%20Hart%20%E2%80%93%20Who%20Booty.mp3"
+                }
+            ];
 
-        const initialSkin = {
-            url: "https://cdn.jsdelivr.net/gh/coolgamer4556/webamp-assets@main/Winamp5_Classified_v5.5.wsz"
-        };
+            try {
+                // 2. Fetch the 23 files from your /music folder automatically
+                const response = await fetch(REPO_API);
+                const files = await response.json();
 
-        const webamp = new Webamp({
-            initialTracks: initialTracks,
-            initialSkin: initialSkin,
-            __butterchurnOptions: {
-                importButterchurn: () => Promise.resolve(window.butterchurn),
-                getPresets: () => {
-                    const presets = window.butterchurnPresets.getPresets();
-                    return Object.keys(presets).map((name) => ({ name, butterchurnPresetObject: presets[name] }));
+                // 3. Filter for music files and format them for Webamp
+                const folderTracks = files
+                    .filter(file => file.name.match(/\.(mp3|wav|ma4|m4a)$/i))
+                    .map(file => ({
+                        metaData: { 
+                            artist: "My Music", 
+                            title: file.name.replace(/\.[^/.]+$/, "") // Removes the .mp3 extension from the name
+                        },
+                        url: CDN_BASE + encodeURIComponent(file.name)
+                    }));
+
+                tracks = [...tracks, ...folderTracks];
+            } catch (error) {
+                console.error("Could not load music folder:", error);
+            }
+
+            // 4. Initialize Webamp with the combined list
+            const webamp = new Webamp({
+                initialTracks: tracks,
+                initialSkin: {
+                    url: "https://cdn.jsdelivr.net/gh/coolgamer4556/webamp-assets@main/Winamp5_Classified_v5.5.wsz"
                 },
-                butterchurnOpen: true 
-            },
-            zIndex: 99999
-        });
-
-        if (Webamp.browserIsSupported()) {
-            webamp.renderWhenReady(document.getElementById("app")).then(() => {
-                webamp.store.dispatch({ type: 'SET_DOUBLE_SIZE_MODE', doubleSizeMode: true });
-                webamp.store.dispatch({ type: 'UPDATE_WINDOW_PROPS', windowId: 'milkdrop', props: { size: [4, 3], xy: [0, 116] } });
-                webamp.store.dispatch({ type: 'UPDATE_WINDOW_PROPS', windowId: 'main', props: { xy: [0, 0] } });
+                __butterchurnOptions: {
+                    importButterchurn: () => Promise.resolve(window.butterchurn),
+                    getPresets: () => {
+                        const presets = window.butterchurnPresets.getPresets();
+                        return Object.keys(presets).map((name) => ({ name, butterchurnPresetObject: presets[name] }));
+                    },
+                    butterchurnOpen: true 
+                },
+                zIndex: 99999
             });
+
+            // 5. Render and Apply Layout
+            if (Webamp.browserIsSupported()) {
+                webamp.renderWhenReady(document.getElementById("app")).then(() => {
+                    webamp.store.dispatch({ type: 'SET_DOUBLE_SIZE_MODE', doubleSizeMode: true });
+                    webamp.store.dispatch({ type: 'UPDATE_WINDOW_PROPS', windowId: 'milkdrop', props: { size: [4, 3], xy: [0, 116] } });
+                    webamp.store.dispatch({ type: 'UPDATE_WINDOW_PROPS', windowId: 'main', props: { xy: [0, 0] } });
+                });
+            }
         }
+
+        // Run the setup
+        initWebamp();
     </script>
 </body>
 </html>
