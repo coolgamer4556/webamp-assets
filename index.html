@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Webamp - Large Fixed</title>
+    <title>Webamp - Asset Music Player</title>
     <style>
         body, html { 
             margin: 0; 
@@ -25,14 +25,29 @@
     <script>
         const Webamp = window.Webamp;
 
+        // Base URL for your music folder on jsDelivr
+        const BASE_URL = "https://cdn.jsdelivr.net/gh/coolgamer4556/webamp-assets@main/music/";
+
         const initialTracks = [
             {
-                metaData: { artist: "Choker", title: "El Dorado" },
-                url: "https://cdn.jsdelivr.net/gh/coolgamer4556/webamp-assets@main/1_05%20-%20El%20Dorado.mp3"
+                metaData: { artist: "Rascal Flatts", title: "Life is a Highway" },
+                url: `${BASE_URL}01.%20Life%20is%20a%20Highway.m4a`
             },
             {
-                metaData: { artist: "Jonn Hart", title: "Who Booty" },
-                url: "https://cdn.jsdelivr.net/gh/coolgamer4556/webamp-assets@main/Jonn%20Hart%20%E2%80%93%20Who%20Booty.mp3"
+                metaData: { artist: "Smash Mouth", title: "All Star" },
+                url: `${BASE_URL}06%20-%20Smash%20Mouth%20-%20All%20Star.mp3`
+            },
+            {
+                metaData: { artist: "Toby Fox", title: "Megalovania" },
+                url: `${BASE_URL}Megalovania.mp3`
+            },
+            {
+                metaData: { artist: "The Living Tombstone", title: "My Ordinary Life" },
+                url: `${BASE_URL}The%20Living%20Tombstone%20-%20My%20Ordinary%20Life.mp3`
+            },
+            {
+                metaData: { artist: "Mareux", title: "The Perfect Girl" },
+                url: `${BASE_URL}The_Perfect_Girl.wav`
             }
         ];
 
@@ -59,7 +74,6 @@
         if (!Webamp.browserIsSupported()) {
             document.getElementById("app").innerText = "Webamp is not supported";
         } else {
-            // Correct way to run code after the player loads:
             webamp.renderWhenReady(document.getElementById("app")).then(() => {
                 
                 // 1. Enable Double Size Mode
@@ -68,18 +82,14 @@
                     doubleSizeMode: true 
                 });
 
-                // 2. Make the Milkdrop visualizer box HUGE
-                // On webamp.org, this is often set to a large grid size.
-                // [Width, Height] -> [4, 3] is very large. 
-                // You can even try [6, 4] if you want it to fill the screen.
+                // 2. Set Milkdrop visualizer size
                 webamp.store.dispatch({
                     type: 'UPDATE_WINDOW_PROPS',
                     windowId: 'milkdrop',
                     props: { size: [4, 3] } 
                 });
 
-                // 3. Move windows so they are tucked into the top-left corner
-                // This removes that "invisible border" feeling.
+                // 3. Position Windows
                 webamp.store.dispatch({
                     type: 'UPDATE_WINDOW_PROPS',
                     windowId: 'main',
@@ -89,10 +99,8 @@
                 webamp.store.dispatch({
                     type: 'UPDATE_WINDOW_PROPS',
                     windowId: 'milkdrop',
-                    props: { xy: [0, 116] } // 116 is the exact height of the main player
+                    props: { xy: [0, 116] } 
                 });
-
-                console.log("Webamp layout updated successfully.");
             });
         }
     </script>
