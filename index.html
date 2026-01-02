@@ -2,17 +2,38 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Webamp - Auto-Loading Playlist</title>
+    <title>Webamp - Music & Skin Cycler</title>
     <style>
         body, html { 
             margin: 0; padding: 0; width: 100%; height: 100%; 
             background: #001f3f; overflow: hidden; 
+            font-family: sans-serif;
         }
         #app { width: 100%; height: 100%; }
+
+        /* Style for the Skin Switcher Button */
+        #skin-button {
+            position: absolute;
+            bottom: 20px;
+            right: 20px;
+            z-index: 100000; /* Must be higher than Webamp's z-index */
+            padding: 10px 20px;
+            background: rgba(0, 0, 0, 0.7);
+            color: white;
+            border: 1px solid #555;
+            cursor: pointer;
+            border-radius: 4px;
+            font-size: 12px;
+            transition: background 0.2s;
+        }
+        #skin-button:hover {
+            background: rgba(50, 50, 50, 0.9);
+        }
     </style>
 </head>
 <body>
     <div id="app"></div>
+    <button id="skin-button">Change Skin</button>
 
     <script src="https://unpkg.com/webamp@1.5.0/built/webamp.bundle.min.js"></script>
     <script src="https://unpkg.com/butterchurn@2.6.7/lib/butterchurn.min.js"></script>
@@ -21,63 +42,87 @@
     <script>
         const Webamp = window.Webamp;
 
-        const REPO_API = "https://api.github.com/repos/coolgamer4556/webamp-assets/contents/music";
-        const CDN_BASE = "https://cdn.jsdelivr.net/gh/coolgamer4556/webamp-assets@main/music/";
+        // GitHub API Paths
+        const MUSIC_API = "https://api.github.com/repos/coolgamer4556/webamp-assets/contents/music";
+        const SKINS_API = "https://api.github.com/repos/coolgamer4556/webamp-assets/contents/Winamp%20Skins";
+        
+        // CDN Base Paths
+        const MUSIC_BASE = "https://cdn.jsdelivr.net/gh/coolgamer4556/webamp-assets@main/music/";
+        const SKINS_BASE = "https://cdn.jsdelivr.net/gh/coolgamer4556/webamp-assets@main/Winamp%20Skins/";
+
+        let skinList = [];
+        let currentSkinIndex = 0;
+        let webamp;
 
         async function initWebamp() {
-            let tracks = [
-                {
-                    metaData: { artist: "Choker", title: "El Dorado" },
-                    url: "https://cdn.jsdelivr.net/gh/coolgamer4556/webamp-assets@main/1_05%20-%20El%20Dorado.mp3"
-                },
-                {
-                    metaData: { artist: "Jonn Hart", title: "Who Booty" },
-                    url: "https://cdn.jsdelivr.net/gh/coolgamer4556/webamp-assets@main/Jonn%20Hart%20%E2%80%93%20Who%20Booty.mp3"
-                }
-            ];
-
+            // 1. Fetch Music & Skins from GitHub simultaneously
             try {
-                const response = await fetch(REPO_API);
-                const files = await response.json();
+                const [musicResponse, skinsResponse] = await Promise.all([
+                    fetch(MUSIC_API),
+                    fetch(SKINS_API)
+                ]);
 
-                const folderTracks = files
+                const musicFiles = await musicResponse.json();
+                const skinFiles = await skinsResponse.json();
+
+                // 2. Process Music Tracks
+                const folderTracks = musicFiles
                     .filter(file => file.name.match(/\.(mp3|wav|ma4|m4a)$/i))
                     .map(file => ({
-                        // 1. We remove 'artist' so it doesn't show "My Music"
-                        // 2. By providing just the title, Webamp shows the filename initially
-                        metaData: { 
-                            title: file.name.replace(/\.[^/.]+$/, "") 
-                        },
-                        url: CDN_BASE + encodeURIComponent(file.name)
+                        metaData: { title: file.name.replace(/\.[^/.]+$/, "") },
+                        url: MUSIC_BASE + encodeURIComponent(file.name)
                     }));
 
-                tracks = [...tracks, ...folderTracks];
-            } catch (error) {
-                console.error("Could not load music folder:", error);
-            }
+                // 3. Process Skins
+                skinList = skinFiles
+                    .filter(file => file.name.endsWith('.wsz') || file.name.endsWith('.zip'))
+                    .map(file => SKINS_BASE + encodeURIComponent(file.name));
 
-            const webamp = new Webamp({
-                initialTracks: tracks,
-                initialSkin: {
-                    url: "https://cdn.jsdelivr.net/gh/coolgamer4556/webamp-assets@main/Winamp5_Classified_v5.5.wsz"
-                },
-                __butterchurnOptions: {
-                    importButterchurn: () => Promise.resolve(window.butterchurn),
-                    getPresets: () => {
-                        const presets = window.butterchurnPresets.getPresets();
-                        return Object.keys(presets).map((name) => ({ name, butterchurnPresetObject: presets[name] }));
+                // 4. Set Initial Tracks
+                const initialTracks = [
+                    {
+                        metaData: { artist: "Choker", title: "El Dorado" },
+                        url: "https://cdn.jsdelivr.net/gh/coolgamer4556/webamp-assets@main/1_05%20-%20El%20Dorado.mp3"
                     },
-                    butterchurnOpen: true 
-                },
-                zIndex: 99999
-            });
+                    ...folderTracks
+                ];
 
-            if (Webamp.browserIsSupported()) {
-                webamp.renderWhenReady(document.getElementById("app")).then(() => {
-                    webamp.store.dispatch({ type: 'SET_DOUBLE_SIZE_MODE', doubleSizeMode: true });
-                    webamp.store.dispatch({ type: 'UPDATE_WINDOW_PROPS', windowId: 'milkdrop', props: { size: [4, 3], xy: [0, 116] } });
-                    webamp.store.dispatch({ type: 'UPDATE_WINDOW_PROPS', windowId: 'main', props: { xy: [0, 0] } });
+                // 5. Initialize Webamp
+                webamp = new Webamp({
+                    initialTracks: initialTracks,
+                    // Use the first skin found in your folder, or a fallback
+                    initialSkin: { url: skinList[0] || "https://cdn.jsdelivr.net/gh/coolgamer4556/webamp-assets@main/Winamp5_Classified_v5.5.wsz" },
+                    __butterchurnOptions: {
+                        importButterchurn: () => Promise.resolve(window.butterchurn),
+                        getPresets: () => {
+                            const presets = window.butterchurnPresets.getPresets();
+                            return Object.keys(presets).map((name) => ({ name, butterchurnPresetObject: presets[name] }));
+                        },
+                        butterchurnOpen: true 
+                    },
+                    zIndex: 99999
                 });
+
+                // 6. Layout and Rendering
+                if (Webamp.browserIsSupported()) {
+                    webamp.renderWhenReady(document.getElementById("app")).then(() => {
+                        webamp.store.dispatch({ type: 'SET_DOUBLE_SIZE_MODE', doubleSizeMode: true });
+                        webamp.store.dispatch({ type: 'UPDATE_WINDOW_PROPS', windowId: 'milkdrop', props: { size: [4, 3], xy: [0, 116] } });
+                        webamp.store.dispatch({ type: 'UPDATE_WINDOW_PROPS', windowId: 'main', props: { xy: [0, 0] } });
+                    });
+                }
+
+                // 7. Set up the Skin Cycling Button
+                document.getElementById('skin-button').addEventListener('click', () => {
+                    if (skinList.length === 0) return;
+                    
+                    currentSkinIndex = (currentSkinIndex + 1) % skinList.length;
+                    webamp.setSkinFromUrl(skinList[currentSkinIndex]);
+                    console.log("Switched to skin:", skinList[currentSkinIndex]);
+                });
+
+            } catch (error) {
+                console.error("Error loading assets from GitHub:", error);
             }
         }
 
