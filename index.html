@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Webamp - Native Skin Menu & Dynamic Music</title>
+    <title>Webamp Dynamic</title>
     <style>
         body, html { 
             margin: 0; padding: 0; width: 100%; height: 100%; 
@@ -22,26 +22,40 @@
     <script>
         const Webamp = window.Webamp;
 
-        // GitHub API Paths
-        const MUSIC_API = "https://api.github.com/repos/coolgamer4556/webamp-assets/contents/music";
+        // 1. GET URL PARAMETERS
+        // This looks at the URL for ?playlist=folderName and ?skin=skinName.wsz
+        const queryString = window.location.search;
+        const urlParams = new URLSearchParams(queryString);
+        
+        // Default to 'music' folder if no playlist specified
+        const playlistFolder = urlParams.get('playlist') || 'music'; 
+        // Get specific skin name if provided (e.g., 'base-skin.wsz')
+        const targetSkin = urlParams.get('skin'); 
+
+        // 2. CONSTRUCT PATHS
+        // We append the playlist folder to the API path
+        const MUSIC_API = `https://api.github.com/repos/coolgamer4556/webamp-assets/contents/music/${playlistFolder}`;
         const SKINS_API = "https://api.github.com/repos/coolgamer4556/webamp-assets/contents/Winamp%20Skins";
         
-        // CDN Base Paths
-        const MUSIC_BASE = "https://cdn.jsdelivr.net/gh/coolgamer4556/webamp-assets@main/music/";
+        // Note: We update the MUSIC_BASE to include the specific folder
+        const MUSIC_BASE = `https://cdn.jsdelivr.net/gh/coolgamer4556/webamp-assets@main/music/${playlistFolder}/`;
         const SKINS_BASE = "https://cdn.jsdelivr.net/gh/coolgamer4556/webamp-assets@main/Winamp%20Skins/";
 
         async function initWebamp() {
             try {
-                // 1. Fetch Music & Skins simultaneously
+                // 3. Fetch Data
+                // If playlist folder doesn't exist, this API call will fail, so ensure folder names match exactly!
                 const [musicResponse, skinsResponse] = await Promise.all([
                     fetch(MUSIC_API),
                     fetch(SKINS_API)
                 ]);
 
+                if (!musicResponse.ok) throw new Error("Could not find music folder: " + playlistFolder);
+
                 const musicFiles = await musicResponse.json();
                 const skinFiles = await skinsResponse.json();
 
-                // 2. Process Music Tracks (Only from the /music folder)
+                // 4. Process Music
                 const folderTracks = musicFiles
                     .filter(file => file.name.match(/\.(mp3|wav|ma4|m4a)$/i))
                     .map(file => ({
@@ -49,23 +63,31 @@
                         url: MUSIC_BASE + encodeURIComponent(file.name)
                     }));
 
-                // 3. Process Skins for the Webamp Menu
-                // We map them to the format: { url: '...', name: '...' }
+                // 5. Process Skins
                 const availableSkins = skinFiles
                     .filter(file => file.name.endsWith('.wsz') || file.name.endsWith('.zip'))
                     .map(file => ({
                         url: SKINS_BASE + encodeURIComponent(file.name),
-                        name: file.name.replace(/\.[^/.]+$/, "") // Set the name shown in the menu
+                        name: file.name.replace(/\.[^/.]+$/, "")
                     }));
 
-                // 4. Initialize Webamp
-                const webamp = new Webamp({
-                    initialTracks: folderTracks, // Cleaned up: No more hardcoded El Dorado
-                    
-                    // Native Skin Menu Setup
-                    availableSkins: availableSkins, 
-                    initialSkin: availableSkins.length > 0 ? availableSkins[0] : null,
+                // 6. Determine Initial Skin
+                // If a ?skin= param was provided, try to find it. Otherwise default to the first one.
+                let initialSkin = availableSkins.length > 0 ? availableSkins[0] : null;
+                
+                if (targetSkin) {
+                    const foundSkin = availableSkins.find(s => 
+                        s.name.toLowerCase() === targetSkin.replace(/\.[^/.]+$/, "").toLowerCase() || 
+                        s.url.toLowerCase().includes(targetSkin.toLowerCase())
+                    );
+                    if (foundSkin) initialSkin = foundSkin;
+                }
 
+                // 7. Init Webamp
+                const webamp = new Webamp({
+                    initialTracks: folderTracks,
+                    availableSkins: availableSkins, 
+                    initialSkin: initialSkin,
                     __butterchurnOptions: {
                         importButterchurn: () => Promise.resolve(window.butterchurn),
                         getPresets: () => {
@@ -77,7 +99,6 @@
                     zIndex: 99999
                 });
 
-                // 5. Layout and Rendering
                 if (Webamp.browserIsSupported()) {
                     webamp.renderWhenReady(document.getElementById("app")).then(() => {
                         webamp.store.dispatch({ type: 'SET_DOUBLE_SIZE_MODE', doubleSizeMode: true });
@@ -87,7 +108,8 @@
                 }
 
             } catch (error) {
-                console.error("Error loading assets from GitHub:", error);
+                console.error("Error loading assets:", error);
+                alert("Error loading playlist. Check console for details.");
             }
         }
 
